@@ -15,6 +15,23 @@ const steps = [
   { title: "Confirm & Run Analysis", fields: [] }
 ];
 
+const REQUIRED_FIELDS = [
+  "originCountry", "currentCity", "familyStatus", "income", "savings", "targetCity", "lifestyle", "timeline", "risk", "housing"
+];
+
+const FIELD_LABELS = {
+  originCountry: "origin country",
+  currentCity: "current city",
+  familyStatus: "moving type",
+  income: "income",
+  savings: "savings",
+  targetCity: "target city",
+  lifestyle: "lifestyle",
+  timeline: "timeline",
+  risk: "risk tolerance",
+  housing: "housing preference"
+};
+
 const state = {
   originCountry: "", currentCity: "", familyStatus: "Alone", income: 0, savings: 0,
   stability: "Yes", targetCity: "Lisbon", timeline: "1–3 months", reason: "Lifestyle",
@@ -32,10 +49,21 @@ const progressBar = document.getElementById("progress-bar");
 const backBtn = document.getElementById("back-btn");
 const nextBtn = document.getElementById("next-btn");
 const loader = document.getElementById("analysis-loader");
+const loaderLine = document.getElementById("loader-line");
+const formError = document.getElementById("form-error");
+const analysisError = document.getElementById("analysis-error");
+const analysisErrorMessage = document.getElementById("analysis-error-message");
+const tryAgainBtn = document.getElementById("try-again-btn");
 
 const screens = {
   onboarding: document.getElementById("onboarding-screen"),
   analysis: document.getElementById("analysis-screen")
+};
+
+const analysisFlow = {
+  status: "idle",
+  loaderTickTimer: null,
+  timeoutTimer: null
 };
 
 function renderStep() {
@@ -78,6 +106,7 @@ function renderStep() {
   const select = stepContainer.querySelector('select[data-key="targetCity"]');
   if (select) select.value = state.targetCity;
   bindInputs();
+  applyVisibleFieldErrors();
 }
 
 function choice(label, key, options) {
@@ -88,35 +117,59 @@ function bindInputs() {
   stepContainer.querySelectorAll("input, select").forEach(el => {
     el.addEventListener("input", () => {
       state[el.dataset.key] = el.type === "number" ? Number(el.value) : el.value;
+      clearFormErrors();
     });
   });
   stepContainer.querySelectorAll("[data-choice]").forEach(btn => {
     btn.addEventListener("click", () => {
       const key = btn.dataset.choice;
       state[key] = btn.dataset.value;
+      clearFormErrors();
       renderStep();
     });
   });
 }
 
 function validateStep() {
-  if (currentStep === 0) return state.originCountry && state.currentCity;
+  if (currentStep === 0) return Boolean(state.originCountry && state.currentCity);
   if (currentStep === 1) return state.income > 0 && state.savings >= 0;
   return true;
 }
 
-backBtn.addEventListener("click", () => { currentStep -= 1; renderStep(); });
-nextBtn.addEventListener("click", async () => {
-  if (!validateStep()) return;
-  if (currentStep < steps.length - 1) {
-    currentStep += 1;
-    renderStep();
-    return;
-  }
-  await runAnalysisSequence();
-});
+function getMissingRequiredFields() {
+  return REQUIRED_FIELDS.filter(field => {
+    const value = state[field];
+    if (typeof value === "number") {
+      if (field === "income") return value <= 0;
+      return value < 0;
+    }
+    return !String(value || "").trim();
+  });
+}
 
-async function runAnalysisSequence() {
+function clearFormErrors() {
+  formError.hidden = true;
+  formError.textContent = "";
+  stepContainer.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"));
+}
+
+function applyVisibleFieldErrors() {
+  const missing = new Set(getMissingRequiredFields());
+  stepContainer.querySelectorAll("input[data-key], select[data-key]").forEach(el => {
+    if (missing.has(el.dataset.key)) {
+      el.classList.add("field-invalid");
+    }
+  });
+}
+
+function showFormErrors(missing) {
+  const labels = missing.map(field => FIELD_LABELS[field]).join(", ");
+  formError.textContent = `Please complete: ${labels}.`;
+  formError.hidden = false;
+  applyVisibleFieldErrors();
+}
+
+function showLoader() {
   const lines = [
     "Analyzing cost structures...",
     "Running financial stability model...",
@@ -124,18 +177,117 @@ async function runAnalysisSequence() {
     "Evaluating visa compatibility...",
     "Generating AI advisory report..."
   ];
+
+  let idx = 0;
+  if (loaderLine) loaderLine.textContent = lines[idx];
   loader.hidden = false;
-  for (const line of lines) {
-    document.getElementById("loader-line").textContent = line;
-    await new Promise(r => setTimeout(r, 850));
+  console.log("loader-start");
+
+  analysisFlow.loaderTickTimer = setInterval(() => {
+    idx = (idx + 1) % lines.length;
+    if (loaderLine) loaderLine.textContent = lines[idx];
+  }, 900);
+}
+
+function hideLoader() {
+  if (analysisFlow.loaderTickTimer) {
+    clearInterval(analysisFlow.loaderTickTimer);
+    analysisFlow.loaderTickTimer = null;
+  }
+  if (analysisFlow.timeoutTimer) {
+    clearTimeout(analysisFlow.timeoutTimer);
+    analysisFlow.timeoutTimer = null;
   }
   loader.hidden = true;
+  console.log("loader-stop");
+}
+
+function resetToStepOne() {
+  hideLoader();
+  analysisFlow.status = "idle";
+  analysisError.hidden = true;
+  screens.analysis.classList.remove("active");
+  screens.onboarding.classList.add("active");
+  currentStep = 0;
+  clearFormErrors();
+  renderStep();
+  screens.onboarding.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showErrorPanel(message) {
+  analysisErrorMessage.textContent = message;
+  analysisError.hidden = false;
   screens.onboarding.classList.remove("active");
   screens.analysis.classList.add("active");
-  latest = computeReport();
-  renderAnalysis(latest);
-  setupAdvisor(latest);
+  screens.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+function renderReport(data) {
+  renderAnalysis(data);
+  setupAdvisor(data);
+  console.log("report-rendered");
+  analysisError.hidden = true;
+  screens.onboarding.classList.remove("active");
+  screens.analysis.classList.add("active");
+  screens.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function analyzeMove() {
+  clearFormErrors();
+  const missing = getMissingRequiredFields();
+  if (missing.length > 0) {
+    showFormErrors(missing);
+    return;
+  }
+
+  console.log("inputs-valid");
+  analysisFlow.status = "loading";
+  showLoader();
+
+  analysisFlow.timeoutTimer = setTimeout(() => {
+    if (analysisFlow.status !== "loading") return;
+    analysisFlow.status = "error";
+    hideLoader();
+    showErrorPanel("We couldn’t generate your report. Please check inputs and try again.");
+  }, 6000);
+
+  try {
+    const reportData = await Promise.resolve(computeReport());
+    console.log("analysis-computed");
+    if (analysisFlow.status !== "loading") return;
+    analysisFlow.status = "success";
+    renderReport(reportData);
+    latest = reportData;
+    hideLoader();
+  } catch (error) {
+    analysisFlow.status = "error";
+    console.error(error?.stack || error);
+    hideLoader();
+    showErrorPanel("We couldn’t generate your report. Please check inputs and try again.");
+  }
+}
+
+backBtn.addEventListener("click", () => {
+  clearFormErrors();
+  currentStep -= 1;
+  renderStep();
+});
+
+nextBtn.addEventListener("click", async () => {
+  clearFormErrors();
+  if (!validateStep()) {
+    showFormErrors(steps[currentStep].fields.filter(key => getMissingRequiredFields().includes(key)));
+    return;
+  }
+  if (currentStep < steps.length - 1) {
+    currentStep += 1;
+    renderStep();
+    return;
+  }
+  await analyzeMove();
+});
+
+tryAgainBtn.addEventListener("click", resetToStepOne);
 
 function computeReport() {
   const city = cityData.find(c => c.city === state.targetCity) || cityData[0];
@@ -255,6 +407,10 @@ function setupAdvisor(r) {
   });
 }
 
-function setHtml(id, html) { document.getElementById(id).innerHTML = html; }
+function setHtml(id, html) {
+  const node = document.getElementById(id);
+  if (!node) throw new Error(`Missing required section #${id}`);
+  node.innerHTML = html;
+}
 
 renderStep();

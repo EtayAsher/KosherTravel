@@ -38,6 +38,7 @@
 
           <form id="flow-form" novalidate>
             <div id="step-container" class="step-container"></div>
+            <div id="form-error" class="error-text" hidden></div>
 
             <div class="flow-actions">
               <button type="button" id="back-btn" class="btn btn-ghost">Back</button>
@@ -48,6 +49,11 @@
       </section>
 
       <section id="analysis-screen" class="screen">
+        <section id="analysis-error" class="analysis-error glass" hidden>
+          <h2>Something went wrong</h2>
+          <p id="analysis-error-message">We couldn’t generate your report. Please check inputs and try again.</p>
+          <button type="button" id="try-again-btn" class="btn btn-primary">Try again</button>
+        </section>
         <div class="analysis-wrap">
           <header class="analysis-hero glass reveal">
             <p class="eyebrow">AI Advisory Report</p>

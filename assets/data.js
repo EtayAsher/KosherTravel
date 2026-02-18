@@ -1,10 +1,38 @@
-window.KT = (() => {
+window.KTData = (() => {
+  const KEYS = {
+    city: 'koshertravel_city',
+    placesOverride: 'koshertravel_places_override'
+  };
+
   async function fetchJSON(path) {
     const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${path}: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch ${path}: ${response.status}`);
     return response.json();
+  }
+
+  async function fetchCities() {
+    return fetchJSON('data/cities.json');
+  }
+
+  async function fetchPlaces() {
+    return fetchJSON('data/places.json');
+  }
+
+  async function getActivePlacesDataset() {
+    const base = await fetchPlaces();
+    const override = storage.get(KEYS.placesOverride, null);
+    if (!Array.isArray(override)) return sanitizePlaces(base);
+    return sanitizePlaces(override);
+  }
+
+  function sanitizePlaces(places) {
+    return places.map((place) => ({
+      ...place,
+      lat: Number(place.lat),
+      lng: Number(place.lng),
+      featuredRank: place.featuredRank == null ? null : Number(place.featuredRank),
+      website: window.KTUI.normalizeWebsite(place.website)
+    }));
   }
 
   const storage = {
@@ -30,9 +58,9 @@ window.KT = (() => {
     const dLat = toRad(bLat - aLat);
     const dLng = toRad(bLng - aLng);
     const x =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLat / 2) ** 2 +
       Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) *
-      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      Math.sin(dLng / 2) ** 2;
     return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   }
 
@@ -42,8 +70,8 @@ window.KT = (() => {
       const bFeatured = b.isFeatured ? 0 : 1;
       if (aFeatured !== bFeatured) return aFeatured - bFeatured;
 
-      const aRank = Number.isFinite(a.featuredRank) ? a.featuredRank : 999;
-      const bRank = Number.isFinite(b.featuredRank) ? b.featuredRank : 999;
+      const aRank = Number.isFinite(a.featuredRank) ? a.featuredRank : Number.MAX_SAFE_INTEGER;
+      const bRank = Number.isFinite(b.featuredRank) ? b.featuredRank : Number.MAX_SAFE_INTEGER;
       if (aRank !== bRank) return aRank - bRank;
 
       const aVerified = a.isVerified ? 0 : 1;
@@ -62,5 +90,5 @@ window.KT = (() => {
     return `https://www.google.com/maps/search/?api=1&query=${destination}`;
   }
 
-  return { fetchJSON, storage, haversineDistanceKm, sortPlaces, getDirectionsUrl };
+  return { fetchCities, fetchPlaces, getActivePlacesDataset, storage, KEYS, haversineDistanceKm, sortPlaces, getDirectionsUrl };
 })();

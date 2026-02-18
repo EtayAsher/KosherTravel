@@ -3,49 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KosherTravel — Finder + Map + Shabbat Mode</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/app.css" />
+  <title>KosherTravel Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="assets/styles.css" />
 </head>
-<body class="home-page">
-  <div class="bg-glow"></div>
-  <main class="home-shell">
-    <section class="hero-card glass">
-      <p class="eyebrow">Kosher Travel Tools</p>
-      <h1>KosherTravel</h1>
-      <p class="subtitle">Finder + Map + Shabbat Mode</p>
-      <p class="hero-text">Discover kosher restaurants, groceries, chabad houses, and mikvehs with a premium city map experience.</p>
+<body>
+  <main class="page-shell">
+    <header class="panel top-toolbar">
+      <div class="toolbar-row">
+        <div>
+          <p class="brand">Kosher<span>Travel</span></p>
+          <p class="subtitle">Premium city finder for kosher travel essentials</p>
+        </div>
+        <div class="select-wrap">
+          <label for="citySelect">City</label>
+          <select id="citySelect" class="input-inline"></select>
+          <button id="shabbatPlannerBtn" class="btn btn-primary" type="button">Shabbat Planner</button>
+          <a href="admin.html" class="btn btn-ghost">Admin</a>
+        </div>
+      </div>
+      <div id="categoryChips" class="filters-row"></div>
+    </header>
 
-      <label for="citySelect" class="field-label">Choose your city</label>
-      <select id="citySelect" class="input-select"></select>
-
-      <button id="openMapBtn" class="btn btn-primary">Open Map</button>
-      <p class="helper">Tip: Your selected city is saved for next time.</p>
+    <section class="layout-grid">
+      <section class="panel results-panel">
+        <div class="results-header">
+          <h2>Places</h2>
+          <p id="resultCount" class="muted"></p>
+        </div>
+        <div id="resultsList" class="results-list"></div>
+      </section>
+      <section class="panel map-panel">
+        <div id="map" aria-label="Map"></div>
+      </section>
     </section>
   </main>
 
-  <script src="assets/app.js"></script>
-  <script>
-    (async function initHome() {
-      const citySelect = document.getElementById('citySelect');
-      const openMapBtn = document.getElementById('openMapBtn');
-
-      const cities = await KT.fetchJSON('data/cities.json');
-      const savedCity = KT.storage.get('koshertravel_city', cities[0]?.id || 'london');
-
-      citySelect.innerHTML = cities
-        .map((city) => `<option value="${city.id}">${city.name}, ${city.country}</option>`)
-        .join('');
-
-      citySelect.value = cities.some((c) => c.id === savedCity) ? savedCity : cities[0].id;
-
-      openMapBtn.addEventListener('click', () => {
-        KT.storage.set('koshertravel_city', citySelect.value);
-        window.location.href = `map.html?city=${encodeURIComponent(citySelect.value)}`;
-      });
-    })();
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="assets/ui.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/finder.js"></script>
+  <script>window.KTFinder.initFinder();</script>
 </body>
 </html>

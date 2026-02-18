@@ -1,36 +1,50 @@
-# KosherTravel — Static MVP
+# KosherTravel — Static Finder + Shabbat Planner
 
-A fully static GitHub Pages MVP for finding kosher places with a premium dark map interface.
+A GitHub Pages-ready static app for discovering kosher places with a premium light map UI and a dedicated Shabbat planning experience.
 
-## What works
+## Experience structure
 
-- City-based Finder + interactive Leaflet map.
-- Category filters (restaurant, grocery, chabad, mikveh).
-- Featured and Verified sorting/badges.
-- Shabbat Mode with clickable origin, radius filtering, and walking distances.
-- Directions links to Google Maps.
-- Admin page (`admin.html`) with local passcode (`KT2026`) and in-browser add/edit/delete.
-- Admin local override persisted to `localStorage` key `koshertravel_places_override`.
-- JSON import/export workflow for static CMS operations.
+- `index.html`: single-page finder (city selector + filters + map + results together).
+- `shabbat.html`: dedicated Shabbat planner with hotel origin + walkable radius.
+- `admin.html`: local static CMS for overrides (import/export JSON + localStorage save).
 
-## Data files
+## Features
 
-- `data/cities.json`: city metadata.
-- `data/places.json`: curated realistic sample places by city.
-- Last updated: 2026-02-18.
+- Single-page finder flow (no map page jump).
+- Light premium map style (Carto Positron via Leaflet).
+- City persistence in `localStorage` (`koshertravel_city`).
+- Filter chips by category.
+- Sorting: Featured (ranked), then Verified, then name.
+- Website button only shown when URL is valid and non-placeholder.
+- Shabbat planner with:
+  - Set hotel location (map click)
+  - Radius slider (default 1.2 km)
+  - Walkable-only filtering + distances
+  - Export list to clipboard
+- Admin URL validation:
+  - Auto-prefixes `https://` when missing
+  - Rejects `example.*`, `localhost`, invalid schemes
+  - Saves invalid entries as empty website string
 
-## Run locally
+## Data + storage
+
+- `data/cities.json`: city definitions.
+- `data/places.json`: base places dataset.
+- Local override key: `koshertravel_places_override`.
+- Active dataset = `places.json` merged with local override (when present).
+
+## Local run
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open:
+Open:
 
-- Home: `http://localhost:8000/index.html`
-- Finder: `http://localhost:8000/map.html`
+- Finder: `http://localhost:8000/index.html`
+- Shabbat: `http://localhost:8000/shabbat.html`
 - Admin: `http://localhost:8000/admin.html`
 
-## Deployment
+## Deploy
 
-No build step required. Works directly on GitHub Pages.
+No build step required. Publish directly to GitHub Pages.

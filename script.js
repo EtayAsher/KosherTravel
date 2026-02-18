@@ -1,416 +1,381 @@
-const cityData = [
-  { city: "Lisbon", country: "Portugal", rent: 1350, food: 430, transport: 70, insurance: 160, taxRate: 0.26, visa: 3000 },
-  { city: "Porto", country: "Portugal", rent: 980, food: 370, transport: 55, insurance: 150, taxRate: 0.24, visa: 2600 },
-  { city: "Barcelona", country: "Spain", rent: 1600, food: 460, transport: 70, insurance: 180, taxRate: 0.28, visa: 3200 },
-  { city: "Valencia", country: "Spain", rent: 1150, food: 390, transport: 55, insurance: 165, taxRate: 0.25, visa: 2800 },
-  { city: "Berlin", country: "Germany", rent: 1750, food: 470, transport: 95, insurance: 230, taxRate: 0.29, visa: 3600 },
-  { city: "Toronto", country: "Canada", rent: 2050, food: 540, transport: 120, insurance: 240, taxRate: 0.3, visa: 4200 }
+const CITY_DATA = [
+  { city: "Lisbon", country: "Portugal", rent: 1350, food: 430, transport: 70, insurance: 160, coworking: 140, taxRate: 0.26, visaIncome: 3000 },
+  { city: "Porto", country: "Portugal", rent: 980, food: 370, transport: 55, insurance: 150, coworking: 120, taxRate: 0.24, visaIncome: 2600 },
+  { city: "Barcelona", country: "Spain", rent: 1600, food: 460, transport: 70, insurance: 180, coworking: 180, taxRate: 0.28, visaIncome: 3200 },
+  { city: "Valencia", country: "Spain", rent: 1150, food: 390, transport: 55, insurance: 165, coworking: 140, taxRate: 0.25, visaIncome: 2800 },
+  { city: "Madrid", country: "Spain", rent: 1750, food: 470, transport: 65, insurance: 190, coworking: 180, taxRate: 0.3, visaIncome: 3500 },
+  { city: "Berlin", country: "Germany", rent: 1750, food: 470, transport: 95, insurance: 230, coworking: 190, taxRate: 0.29, visaIncome: 3600 },
+  { city: "Munich", country: "Germany", rent: 2050, food: 490, transport: 90, insurance: 240, coworking: 210, taxRate: 0.31, visaIncome: 3900 },
+  { city: "Amsterdam", country: "Netherlands", rent: 2100, food: 520, transport: 110, insurance: 250, coworking: 210, taxRate: 0.33, visaIncome: 4200 },
+  { city: "Dublin", country: "Ireland", rent: 2200, food: 530, transport: 120, insurance: 240, coworking: 210, taxRate: 0.34, visaIncome: 4300 },
+  { city: "London", country: "UK", rent: 2600, food: 600, transport: 180, insurance: 260, coworking: 240, taxRate: 0.35, visaIncome: 5200 },
+  { city: "Prague", country: "Czech Republic", rent: 1050, food: 360, transport: 45, insurance: 130, coworking: 120, taxRate: 0.22, visaIncome: 2400 },
+  { city: "Budapest", country: "Hungary", rent: 930, food: 340, transport: 40, insurance: 120, coworking: 110, taxRate: 0.21, visaIncome: 2200 },
+  { city: "Warsaw", country: "Poland", rent: 980, food: 350, transport: 45, insurance: 130, coworking: 120, taxRate: 0.21, visaIncome: 2300 },
+  { city: "Tallinn", country: "Estonia", rent: 1200, food: 380, transport: 50, insurance: 140, coworking: 130, taxRate: 0.22, visaIncome: 2500 },
+  { city: "Athens", country: "Greece", rent: 990, food: 350, transport: 45, insurance: 135, coworking: 110, taxRate: 0.22, visaIncome: 2300 },
+  { city: "Mexico City", country: "Mexico", rent: 1200, food: 340, transport: 45, insurance: 130, coworking: 120, taxRate: 0.24, visaIncome: 2400 },
+  { city: "Buenos Aires", country: "Argentina", rent: 900, food: 310, transport: 35, insurance: 110, coworking: 90, taxRate: 0.2, visaIncome: 2000 },
+  { city: "Sao Paulo", country: "Brazil", rent: 1300, food: 380, transport: 70, insurance: 160, coworking: 130, taxRate: 0.26, visaIncome: 2600 },
+  { city: "Toronto", country: "Canada", rent: 2050, food: 540, transport: 120, insurance: 240, coworking: 200, taxRate: 0.3, visaIncome: 4200 },
+  { city: "Singapore", country: "Singapore", rent: 2400, food: 500, transport: 110, insurance: 220, coworking: 220, taxRate: 0.2, visaIncome: 4500 }
 ];
 
-const steps = [
-  { title: "About You", fields: ["originCountry", "currentCity", "familyStatus"] },
-  { title: "Financial Profile", fields: ["income", "savings", "stability"] },
-  { title: "Relocation Goal", fields: ["targetCity", "timeline", "reason"] },
-  { title: "Lifestyle Expectations", fields: ["lifestyle", "housing", "risk"] },
-  { title: "Confirm & Run Analysis", fields: [] }
+const COUNTRIES = [
+  "United States", "Canada", "United Kingdom", "Germany", "France", "Spain", "Portugal", "Brazil", "Mexico", "Argentina",
+  "India", "Australia", "Netherlands", "Ireland", "Italy", "Poland", "South Africa", "Japan", "South Korea", "Singapore"
 ];
 
-const REQUIRED_FIELDS = [
-  "originCountry", "currentCity", "familyStatus", "income", "savings", "targetCity", "lifestyle", "timeline", "risk", "housing"
-];
-
-const FIELD_LABELS = {
-  originCountry: "origin country",
-  currentCity: "current city",
-  familyStatus: "moving type",
-  income: "income",
-  savings: "savings",
-  targetCity: "target city",
-  lifestyle: "lifestyle",
-  timeline: "timeline",
-  risk: "risk tolerance",
-  housing: "housing preference"
-};
-
-const state = {
-  originCountry: "", currentCity: "", familyStatus: "Alone", income: 0, savings: 0,
-  stability: "Yes", targetCity: "Lisbon", timeline: "1–3 months", reason: "Lifestyle",
-  lifestyle: "Standard", housing: "Studio", risk: "Balanced"
+const FACTORS = {
+  lifestyle: { Basic: 0.88, Standard: 1, Comfortable: 1.18 },
+  housing: { Shared: 0.8, Studio: 1, "1BR": 1.2 },
+  movingType: { Alone: 1, Partner: 1.32, Family: 1.7 }
 };
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-let currentStep = 0;
-let latest = null;
 
-const stepContainer = document.getElementById("step-container");
-const stepLabel = document.getElementById("step-label");
-const stepTitle = document.getElementById("step-title");
-const progressBar = document.getElementById("progress-bar");
-const backBtn = document.getElementById("back-btn");
-const nextBtn = document.getElementById("next-btn");
-const loader = document.getElementById("analysis-loader");
-const loaderLine = document.getElementById("loader-line");
-const formError = document.getElementById("form-error");
-const analysisError = document.getElementById("analysis-error");
-const analysisErrorMessage = document.getElementById("analysis-error-message");
-const tryAgainBtn = document.getElementById("try-again-btn");
+const form = document.getElementById("smart-form");
+const reportNode = document.getElementById("report");
+const helpNode = document.getElementById("help-accordion");
+const resetBtn = document.getElementById("reset-btn");
+const originCountrySelect = form.elements.originCountry;
+const citySelect = form.elements.targetCity;
 
-const screens = {
-  onboarding: document.getElementById("onboarding-screen"),
-  analysis: document.getElementById("analysis-screen")
-};
+let lastReport = null;
 
-const analysisFlow = {
-  status: "idle",
-  loaderTickTimer: null,
-  timeoutTimer: null
-};
-
-function renderStep() {
-  const step = steps[currentStep];
-  stepLabel.textContent = `Step ${currentStep + 1} of ${steps.length}`;
-  stepTitle.textContent = step.title;
-  progressBar.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
-  backBtn.style.visibility = currentStep === 0 ? "hidden" : "visible";
-  nextBtn.textContent = currentStep === steps.length - 1 ? "Run My Relocation Intelligence" : "Continue";
-
-  const cityOptions = cityData.map(c => `<option value="${c.city}">${c.city}, ${c.country}</option>`).join("");
-  const stepViews = [
-    `<div class="step"><div class="step-grid">
-      <label>Country of origin<input data-key="originCountry" value="${state.originCountry}" placeholder="e.g. Brazil" /></label>
-      <label>Current city<input data-key="currentCity" value="${state.currentCity}" placeholder="e.g. São Paulo" /></label>
-      ${choice("Are you moving alone or with others?", "familyStatus", ["Alone", "Partner", "Family (with children)"])}
-    </div></div>`,
-    `<div class="step"><div class="step-grid">
-      <label>Monthly income (USD)<input data-key="income" type="number" min="0" value="${state.income || ""}" /></label>
-      <label>Savings (USD)<input data-key="savings" type="number" min="0" value="${state.savings || ""}" /></label>
-      ${choice("Remote income stable?", "stability", ["Yes", "No", "Freelance"])}
-    </div></div>`,
-    `<div class="step"><div class="step-grid">
-      <label>Target city<select data-key="targetCity">${cityOptions}</select></label>
-      ${choice("Timeline", "timeline", ["1–3 months", "3–6 months", "6–12 months"])}
-      ${choice("Why are you moving?", "reason", ["Lifestyle", "Lower cost", "Career", "Adventure"])}
-    </div></div>`,
-    `<div class="step"><div class="step-grid">
-      ${choice("Lifestyle level", "lifestyle", ["Basic", "Standard", "Comfortable"])}
-      ${choice("Housing preference", "housing", ["Shared", "Studio", "1-bedroom"])}
-      ${choice("Risk tolerance", "risk", ["Conservative", "Balanced", "Aggressive"])}
-    </div></div>`,
-    `<div class="step"><div class="step-grid"><h3>Ready to run your analysis?</h3>
-      <p>We will model your costs, stress scenarios, visa fit, and strategic timeline in one intelligence report.</p>
-      <ul><li>Financial stability map</li><li>Runway and stress tests</li><li>Move strategy blueprint</li></ul>
-    </div></div>`
-  ];
-
-  stepContainer.innerHTML = stepViews[currentStep];
-  const select = stepContainer.querySelector('select[data-key="targetCity"]');
-  if (select) select.value = state.targetCity;
-  bindInputs();
-  applyVisibleFieldErrors();
+function bootstrapOptions() {
+  originCountrySelect.innerHTML += COUNTRIES.map((country) => `<option>${country}</option>`).join("");
+  citySelect.innerHTML = CITY_DATA.map(({ city, country }) => `<option>${city}, ${country}</option>`).join("");
+  citySelect.selectedIndex = 0;
 }
 
-function choice(label, key, options) {
-  return `<div><p>${label}</p><div class="choice-group">${options.map(op => `<button type="button" data-choice="${key}" data-value="${op}" class="${state[key] === op ? "active" : ""}">${op}</button>`).join("")}</div></div>`;
+function parseCity(value) {
+  const cityName = value.split(",")[0].trim();
+  return CITY_DATA.find((entry) => entry.city === cityName) || CITY_DATA[0];
 }
 
-function bindInputs() {
-  stepContainer.querySelectorAll("input, select").forEach(el => {
-    el.addEventListener("input", () => {
-      state[el.dataset.key] = el.type === "number" ? Number(el.value) : el.value;
-      clearFormErrors();
-    });
-  });
-  stepContainer.querySelectorAll("[data-choice]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const key = btn.dataset.choice;
-      state[key] = btn.dataset.value;
-      clearFormErrors();
-      renderStep();
-    });
-  });
-}
+function validateField(field) {
+  const value = String(field.value || "").trim();
+  const wrapper = field.closest(".field");
+  const error = wrapper?.querySelector(".error");
+  let message = "";
 
-function validateStep() {
-  if (currentStep === 0) return Boolean(state.originCountry && state.currentCity);
-  if (currentStep === 1) return state.income > 0 && state.savings >= 0;
-  return true;
-}
-
-function getMissingRequiredFields() {
-  return REQUIRED_FIELDS.filter(field => {
-    const value = state[field];
-    if (typeof value === "number") {
-      if (field === "income") return value <= 0;
-      return value < 0;
-    }
-    return !String(value || "").trim();
-  });
-}
-
-function clearFormErrors() {
-  formError.hidden = true;
-  formError.textContent = "";
-  stepContainer.querySelectorAll(".field-invalid").forEach(el => el.classList.remove("field-invalid"));
-}
-
-function applyVisibleFieldErrors() {
-  const missing = new Set(getMissingRequiredFields());
-  stepContainer.querySelectorAll("input[data-key], select[data-key]").forEach(el => {
-    if (missing.has(el.dataset.key)) {
-      el.classList.add("field-invalid");
-    }
-  });
-}
-
-function showFormErrors(missing) {
-  const labels = missing.map(field => FIELD_LABELS[field]).join(", ");
-  formError.textContent = `Please complete: ${labels}.`;
-  formError.hidden = false;
-  applyVisibleFieldErrors();
-}
-
-function showLoader() {
-  const lines = [
-    "Analyzing cost structures...",
-    "Running financial stability model...",
-    "Simulating stress scenarios...",
-    "Evaluating visa compatibility...",
-    "Generating AI advisory report..."
-  ];
-
-  let idx = 0;
-  if (loaderLine) loaderLine.textContent = lines[idx];
-  loader.hidden = false;
-  console.log("loader-start");
-
-  analysisFlow.loaderTickTimer = setInterval(() => {
-    idx = (idx + 1) % lines.length;
-    if (loaderLine) loaderLine.textContent = lines[idx];
-  }, 900);
-}
-
-function hideLoader() {
-  if (analysisFlow.loaderTickTimer) {
-    clearInterval(analysisFlow.loaderTickTimer);
-    analysisFlow.loaderTickTimer = null;
+  if (!value) message = "This field is required.";
+  if ((field.name === "income" || field.name === "savings") && Number(value) < 0) {
+    message = "Value must be zero or greater.";
   }
-  if (analysisFlow.timeoutTimer) {
-    clearTimeout(analysisFlow.timeoutTimer);
-    analysisFlow.timeoutTimer = null;
-  }
-  loader.hidden = true;
-  console.log("loader-stop");
-}
-
-function resetToStepOne() {
-  hideLoader();
-  analysisFlow.status = "idle";
-  analysisError.hidden = true;
-  screens.analysis.classList.remove("active");
-  screens.onboarding.classList.add("active");
-  currentStep = 0;
-  clearFormErrors();
-  renderStep();
-  screens.onboarding.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function showErrorPanel(message) {
-  analysisErrorMessage.textContent = message;
-  analysisError.hidden = false;
-  screens.onboarding.classList.remove("active");
-  screens.analysis.classList.add("active");
-  screens.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function renderReport(data) {
-  renderAnalysis(data);
-  setupAdvisor(data);
-  console.log("report-rendered");
-  analysisError.hidden = true;
-  screens.onboarding.classList.remove("active");
-  screens.analysis.classList.add("active");
-  screens.analysis.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-async function analyzeMove() {
-  clearFormErrors();
-  const missing = getMissingRequiredFields();
-  if (missing.length > 0) {
-    showFormErrors(missing);
-    return;
+  if (field.name === "income" && Number(value) === 0) {
+    message = "Monthly income must be greater than zero.";
   }
 
-  console.log("inputs-valid");
-  analysisFlow.status = "loading";
-  showLoader();
-
-  analysisFlow.timeoutTimer = setTimeout(() => {
-    if (analysisFlow.status !== "loading") return;
-    analysisFlow.status = "error";
-    hideLoader();
-    showErrorPanel("We couldn’t generate your report. Please check inputs and try again.");
-  }, 6000);
-
-  try {
-    const reportData = await Promise.resolve(computeReport());
-    console.log("analysis-computed");
-    if (analysisFlow.status !== "loading") return;
-    analysisFlow.status = "success";
-    renderReport(reportData);
-    latest = reportData;
-    hideLoader();
-  } catch (error) {
-    analysisFlow.status = "error";
-    console.error(error?.stack || error);
-    hideLoader();
-    showErrorPanel("We couldn’t generate your report. Please check inputs and try again.");
-  }
+  if (wrapper) wrapper.classList.toggle("invalid", Boolean(message));
+  if (error) error.textContent = message;
+  return !message;
 }
 
-backBtn.addEventListener("click", () => {
-  clearFormErrors();
-  currentStep -= 1;
-  renderStep();
-});
-
-nextBtn.addEventListener("click", async () => {
-  clearFormErrors();
-  if (!validateStep()) {
-    showFormErrors(steps[currentStep].fields.filter(key => getMissingRequiredFields().includes(key)));
-    return;
-  }
-  if (currentStep < steps.length - 1) {
-    currentStep += 1;
-    renderStep();
-    return;
-  }
-  await analyzeMove();
-});
-
-tryAgainBtn.addEventListener("click", resetToStepOne);
-
-function computeReport() {
-  const city = cityData.find(c => c.city === state.targetCity) || cityData[0];
-  const lifestyleFactor = { Basic: 0.87, Standard: 1, Comfortable: 1.22 }[state.lifestyle];
-  const housingFactor = { Shared: 0.82, Studio: 1, "1-bedroom": 1.18 }[state.housing];
-  const familyFactor = { Alone: 1, Partner: 1.34, "Family (with children)": 1.7 }[state.familyStatus];
-
-  const baseCost = (city.rent + city.food + city.transport + city.insurance) * lifestyleFactor * housingFactor * familyFactor;
-  const tax = state.income * city.taxRate;
-  const net = state.income - tax - baseCost;
-  const runway = net < 0 ? state.savings / Math.abs(net) : Infinity;
-
-  const scenarioA = state.income * 0.8 - state.income * 0.8 * city.taxRate - baseCost;
-  const scenarioB = state.income - tax - (baseCost + city.rent * 0.15);
-  const scenarioC = state.income * 0.8 - state.income * 0.8 * city.taxRate - (baseCost + city.rent * 0.15);
-
-  const visaPass = state.income >= city.visa;
-  const readiness = Math.max(10, Math.min(97, Math.round(((net + 1700) / 3200) * 55 + (visaPass ? 25 : 8) + (state.risk === "Conservative" ? 15 : state.risk === "Balanced" ? 9 : 4))));
-
-  const alternatives = cityData
-    .filter(c => c.city !== city.city)
-    .map(c => {
-      const altCost = (c.rent + c.food + c.transport + c.insurance) * lifestyleFactor * housingFactor * familyFactor;
-      return { city: c.city, savings: Math.round(baseCost - altCost) };
-    })
-    .sort((a, b) => b.savings - a.savings)
-    .slice(0, 2);
-
-  return { city, baseCost, tax, net, runway, scenarioA, scenarioB, scenarioC, visaPass, readiness, alternatives };
+function validateForm() {
+  return Array.from(form.elements)
+    .filter((field) => field.matches?.("input, select"))
+    .every((field) => validateField(field));
 }
 
-function renderAnalysis(r) {
-  document.getElementById("analysis-title").textContent = `Your Relocation Intelligence Report for ${r.city.city}`;
-  animateScore(r.readiness);
-  document.getElementById("score-summary").textContent = r.readiness >= 75 ? "Strong position with manageable risks." : r.readiness >= 50 ? "Promising, but requires targeted prep." : "High risk profile—stabilize before moving.";
+function computeReport(input) {
+  const city = parseCity(input.targetCity);
+  const lifestyleFactor = FACTORS.lifestyle[input.lifestyle];
+  const housingFactor = FACTORS.housing[input.housing];
+  const householdFactor = FACTORS.movingType[input.movingType];
 
-  setHtml("section-summary", `<h3>🧭 Executive Summary</h3>
-    <p>With your current income of <strong>${usd.format(state.income)}</strong> and savings of <strong>${usd.format(state.savings)}</strong>, this move to ${r.city.city} is modeled as a <strong>${r.net > 0 ? "controlled" : "stretched"}</strong> transition. As someone relocating from ${state.originCountry}, your strongest lever is disciplined housing and timeline execution.</p>
-    <p class="insight">Bold insight: ${r.net > 400 ? "You can move with confidence if you protect your cash buffer." : "Your move is possible, but only with a tighter pre-move financial plan."}</p>`);
-
-  const maxBar = Math.max(state.income, r.baseCost, r.tax, Math.abs(r.net));
-  setHtml("section-financial", `<h3>📊 Financial Stability Map</h3><div class="bars">
-    ${bar("Income", state.income, maxBar)}${bar("Total Cost", r.baseCost, maxBar)}${bar("Tax", r.tax, maxBar)}${bar("Net Surplus", Math.max(0, r.net), maxBar)}
-  </div>`);
-
-  setHtml("section-runway", `<h3>⏳ Survival & Runway</h3>
-    <p>You can sustain this plan for <strong class="${r.runway < 5 ? "bad" : "good"}">${Number.isFinite(r.runway) ? `${r.runway.toFixed(1)} months` : "Long-term stable runway"}</strong>.</p>
-    <p class="insight ${r.runway < 5 ? "bad" : "good"}">${r.net < 0 ? "Warning: monthly burn detected—delay or downshift expenses." : "Green signal: you are operating with positive monthly resilience."}</p>`);
-
-  setHtml("section-stress", `<h3>⚠️ Stress Test Simulation</h3><div class="card-grid">
-    ${stressCard("Income -20%", r.scenarioA)}${stressCard("Rent +15%", r.scenarioB)}${stressCard("Combined shock", r.scenarioC)}
-  </div>`);
-
-  setHtml("section-visa", `<h3>🛂 Visa & Legal Fit</h3>
-    <p class="insight ${r.visaPass ? "good" : "bad"}">${r.visaPass ? "PASS" : "FAIL"} — ${r.visaPass ? "Your income clears the threshold." : `You are below the ${usd.format(r.city.visa)} requirement.`}</p>
-    <ul><li>Document trail strength should match your timeline of ${state.timeline}.</li><li>Freelance and unstable income profiles need stronger bank-history proof.</li></ul>`);
-
-  setHtml("section-strategy", `<h3>🧠 Relocation Strategy Blueprint</h3>
-    <ul><li>${state.familyStatus === "Family (with children)" ? "Prioritize school-safe districts and healthcare access over city-center location." : "Use flexibility to optimize rent and commute trade-offs."}</li>
-    <li>Given your ${state.risk.toLowerCase()} risk tolerance, keep at least ${usd.format(r.baseCost * (state.risk === "Aggressive" ? 3 : 6))} liquid before committing.</li>
-    <li>With a ${state.timeline} timeline, lock legal docs and housing shortlist in the next 30 days.</li></ul>`);
-
-  setHtml("section-alternatives", `<h3>🌍 Smarter Alternatives</h3><div class="card-grid">
-    ${r.alternatives.map(a => `<div class="card"><strong>${a.city}</strong><p>Estimated monthly savings: ${usd.format(a.savings)}</p></div>`).join("")}
-  </div>`);
-
-  const call = r.readiness >= 75 ? "Move Now" : r.readiness >= 50 ? "Prepare 3–6 Months" : "Reconsider Strategy";
-  setHtml("section-final", `<h3>✅ Final Recommendation</h3><p class="insight">${call}</p><p>Your profile says: act decisively, but protect optionality.</p>`);
-
-  setTimeout(() => document.querySelectorAll(".reveal").forEach((el, i) => setTimeout(() => el.classList.add("visible"), i * 110)), 100);
-}
-
-function bar(label, value, max) {
-  return `<div class="bar-row"><span>${label}<strong>${usd.format(value)}</strong></span><div class="bar-track"><div class="bar-fill" style="width:${(value / max) * 100}%"></div></div></div>`;
-}
-
-function stressCard(label, net) {
-  return `<div class="card"><strong>${label}</strong><p class="${net >= 0 ? "good" : "bad"}">${net >= 0 ? "Resilient" : "Pressure detected"}</p><p>Net: ${usd.format(net)}</p></div>`;
-}
-
-function animateScore(target) {
-  const ring = document.getElementById("score-ring");
-  const val = document.getElementById("score-value");
-  let cur = 0;
-  const timer = setInterval(() => {
-    cur += 1;
-    val.textContent = cur;
-    ring.style.background = `conic-gradient(#5988ff ${cur * 3.6}deg, rgba(255,255,255,0.08) 0deg)`;
-    if (cur >= target) clearInterval(timer);
-  }, 16);
-}
-
-function setupAdvisor(r) {
-  const q = {
-    "Where am I most financially exposed?": `• Your highest pressure point is housing + tax drag.\n• Monthly surplus is ${usd.format(r.net)}.\n• Protect a hard cap on rent and pre-negotiate move-in costs.`,
-    "How can I improve my runway?": `• Increase runway by reducing housing tier for 90 days.\n• Build savings to ${usd.format(r.baseCost * 6)} minimum.\n• Keep variable spending under 12% of income.`,
-    "What income should I target?": `• Target ${usd.format(r.baseCost / (1 - r.city.taxRate) + 900)} monthly.\n• This creates healthy buffer for disruptions.`,
-    "What’s the biggest risk in this move?": `• The largest risk is timeline-compressed relocation with limited buffer.\n• With your current numbers, a 20% income dip is ${usd.format(r.scenarioA)} net.`,
-    "What if my income drops?": `• At -20% income, projected net is ${usd.format(r.scenarioA)}.\n• Delay move if this stays negative for more than 2 months.`,
-    "Am I overestimating my stability?": `• If your income is ${state.stability === "Yes" ? "contract-stable" : "variable"}, assume 10-20% volatility.\n• Rebuild plan using conservative case before booking.`,
-    "Is this city realistic with children?": `• For ${state.familyStatus}, this city is ${r.net > 300 ? "viable" : "tight"}.\n• Prioritize school-zone housing and childcare pricing.`,
-    "How does family status change my budget?": `• Family profile raises baseline costs significantly.\n• Your modeled monthly cost is ${usd.format(r.baseCost)} with your current setup.`,
-    "Should I wait 6 months?": `• If you can increase savings by ${usd.format(Math.max(0, r.baseCost * 6 - state.savings))}, waiting 6 months improves confidence.`,
-    "What should I do before buying a ticket?": `• Lock visa paperwork.\n• Confirm first 60-day housing.\n• Build emergency liquidity to ${usd.format(r.baseCost * 4)} minimum.`,
-    "Give me a 30-day relocation action plan.": `• Week 1: budget hard reset + document checklist.\n• Week 2: housing negotiations + legal prep.\n• Week 3: stress-test income channels.\n• Week 4: final go/no-go review.`,
-    "What documents should I prepare?": `• Passport validity, income proof, bank statements, insurance, lease docs, tax records.\n• Keep notarized scans and translated copies ready.`
+  const monthlyCosts = {
+    rent: city.rent * housingFactor * householdFactor,
+    food: city.food * lifestyleFactor * householdFactor,
+    transport: city.transport * householdFactor,
+    insurance: city.insurance * householdFactor,
+    coworking: city.coworking
   };
 
-  const container = document.getElementById("advisor-buttons");
-  const reply = document.getElementById("advisor-reply");
-  container.innerHTML = "";
-  Object.keys(q).forEach(text => {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.addEventListener("click", () => { reply.textContent = q[text]; });
-    container.appendChild(btn);
+  const grossIncome = Number(input.income);
+  const tax = grossIncome * city.taxRate;
+  const totalCosts = Object.values(monthlyCosts).reduce((sum, value) => sum + value, 0);
+  const net = grossIncome - tax - totalCosts;
+  const runwayMonths = net < 0 ? Number(input.savings) / Math.abs(net) : Infinity;
+
+  const emergencyTargetMonths = input.risk === "Conservative" ? 8 : input.risk === "Balanced" ? 6 : 4;
+  const emergencyFundTarget = totalCosts * emergencyTargetMonths;
+
+  const scenarios = [
+    { label: "Income -20%", income: grossIncome * 0.8, extraRent: 0 },
+    { label: "Rent +15%", income: grossIncome, extraRent: monthlyCosts.rent * 0.15 },
+    { label: "Both", income: grossIncome * 0.8, extraRent: monthlyCosts.rent * 0.15 }
+  ].map((scenario) => {
+    const scenarioTax = scenario.income * city.taxRate;
+    const scenarioNet = scenario.income - scenarioTax - (totalCosts + scenario.extraRent);
+    const scenarioRunway = scenarioNet < 0 ? Number(input.savings) / Math.abs(scenarioNet) : Infinity;
+    return { ...scenario, net: scenarioNet, runway: scenarioRunway };
   });
+
+  const visaPass = grossIncome >= city.visaIncome;
+
+  const timelinePenalty = { "1–3 months": 8, "3–6 months": 4, "6–12 months": 0 }[input.timeline];
+  const riskPenalty = { Conservative: 0, Balanced: 4, Aggressive: 8 }[input.risk];
+  const netScore = Math.max(0, Math.min(45, ((net + 1800) / 3600) * 45));
+  const savingsScore = Math.max(0, Math.min(25, (Number(input.savings) / emergencyFundTarget) * 25));
+  const visaScore = visaPass ? 20 : 6;
+  const readinessScore = Math.round(Math.max(0, Math.min(100, netScore + savingsScore + visaScore - timelinePenalty - riskPenalty)));
+
+  const alternatives = CITY_DATA
+    .filter((entry) => entry.city !== city.city)
+    .map((entry) => {
+      const altCosts = (entry.rent * housingFactor * householdFactor) +
+        (entry.food * lifestyleFactor * householdFactor) +
+        (entry.transport * householdFactor) +
+        (entry.insurance * householdFactor) +
+        entry.coworking;
+      return { city: `${entry.city}, ${entry.country}`, delta: totalCosts - altCosts };
+    })
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 2);
+
+  const verdict = net >= 500 && visaPass ? "Strong" : net >= 0 && visaPass ? "Borderline" : "High Risk";
+
+  return {
+    input,
+    city,
+    monthlyCosts,
+    grossIncome,
+    tax,
+    totalCosts,
+    net,
+    runwayMonths,
+    emergencyFundTarget,
+    scenarios,
+    visaPass,
+    readinessScore,
+    alternatives,
+    verdict
+  };
 }
 
-function setHtml(id, html) {
-  const node = document.getElementById(id);
-  if (!node) throw new Error(`Missing required section #${id}`);
-  node.innerHTML = html;
+function verdictClass(verdict) {
+  if (verdict === "Strong") return "good";
+  if (verdict === "Borderline") return "warn";
+  return "bad";
 }
 
-renderStep();
+function formatRunway(value) {
+  return Number.isFinite(value) ? `${value.toFixed(1)} months` : "Stable";
+}
+
+function generateRecommendations(report) {
+  const recommendations = [];
+  const { input, net, runwayMonths, emergencyFundTarget, totalCosts } = report;
+
+  if (net < 0) {
+    recommendations.push("Reduce initial housing tier by one step for the first 90 days to stop monthly deficit burn.");
+  } else {
+    recommendations.push("Keep fixed costs below 70% of post-tax income to preserve optionality after the move.");
+  }
+
+  if (input.movingType === "Family") recommendations.push("Pre-qualify family housing and healthcare providers before signing a lease.");
+  if (input.timeline === "1–3 months") recommendations.push("Compress planning into a weekly checklist and secure visa documents immediately.");
+  if (input.risk === "Conservative") recommendations.push("Do not relocate until emergency savings are at or above the full target buffer.");
+  if (input.housing === "1BR") recommendations.push("Negotiate lease incentives and cap furnished upgrades to protect early cashflow.");
+
+  recommendations.push(`Build an emergency fund target of ${usd.format(emergencyFundTarget)} (${Math.round(emergencyFundTarget / totalCosts)} months of costs).`);
+  recommendations.push(`Set a no-go threshold: if runway drops below ${input.risk === "Aggressive" ? 3 : 5} months, pause relocation commitments.`);
+
+  if (runwayMonths < 6 && Number.isFinite(runwayMonths)) {
+    recommendations.push("Create a contingency income channel before departure to reduce downside in stress scenarios.");
+  }
+
+  if (recommendations.length < 5) {
+    recommendations.push("Complete a 30-day trial budget using target-city pricing before making irreversible commitments.");
+  }
+
+  return recommendations.slice(0, 8);
+}
+
+function renderReport(report) {
+  const keyBullets = [
+    `Projected monthly ${report.net >= 0 ? "surplus" : "deficit"}: ${usd.format(report.net)}.`,
+    `Readiness score: ${report.readinessScore}/100 with a ${report.input.timeline} timeline.`,
+    `${report.visaPass ? "Visa income threshold met" : "Visa income threshold not met"} for ${report.city.city}.`
+  ];
+
+  const bottomLine = report.verdict === "Strong"
+    ? "Bottom line: financially feasible now, with disciplined budget controls."
+    : report.verdict === "Borderline"
+      ? "Bottom line: feasible with preparation and tighter cost management before moving."
+      : "Bottom line: defer relocation until income stability or savings buffer improves.";
+
+  const recommendations = generateRecommendations(report);
+
+  reportNode.innerHTML = `
+    <h2>Relocation decision memo</h2>
+    <p class="muted">Target: ${report.city.city}, ${report.city.country}</p>
+
+    <section class="report-section section-reveal">
+      <h3>A) Executive Summary</h3>
+      <span class="badge ${verdictClass(report.verdict)}">Verdict: ${report.verdict}</span>
+      <ul>${keyBullets.map((line) => `<li>${line}</li>`).join("")}</ul>
+      <p><strong>${bottomLine}</strong></p>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>B) Cost & Cashflow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Category</th><th>Estimated monthly cost</th></tr></thead>
+          <tbody>
+            <tr><td>Rent</td><td>${usd.format(report.monthlyCosts.rent)}</td></tr>
+            <tr><td>Food</td><td>${usd.format(report.monthlyCosts.food)}</td></tr>
+            <tr><td>Transport</td><td>${usd.format(report.monthlyCosts.transport)}</td></tr>
+            <tr><td>Insurance</td><td>${usd.format(report.monthlyCosts.insurance)}</td></tr>
+            <tr><td>Coworking</td><td>${usd.format(report.monthlyCosts.coworking)}</td></tr>
+            <tr><td><strong>Total living costs</strong></td><td><strong>${usd.format(report.totalCosts)}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>Estimated tax: ${usd.format(report.tax)} (${Math.round(report.city.taxRate * 100)}%).</li>
+        <li>Net monthly result: ${usd.format(report.net)} (${report.net >= 0 ? "surplus" : "deficit"}).</li>
+        <li>${report.net >= 0 ? "Cashflow is positive; focus on preserving margin." : "Cashflow is negative; reduce fixed costs before relocating."}</li>
+      </ul>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>C) Runway & Safety Buffer</h3>
+      <div class="key-value">
+        <div class="metric"><p>Runway</p><strong>${formatRunway(report.runwayMonths)}</strong></div>
+        <div class="metric"><p>Emergency fund target</p><strong>${usd.format(report.emergencyFundTarget)}</strong></div>
+      </div>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>D) Stress Test</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Net after costs</th><th>Runway</th></tr></thead>
+          <tbody>
+            ${report.scenarios.map((s) => `<tr><td>${s.label}</td><td>${usd.format(s.net)}</td><td>${formatRunway(s.runway)}</td></tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>E) Visa Fit</h3>
+      <ul>
+        <li>Required monthly income: ${usd.format(report.city.visaIncome)}.</li>
+        <li>Your monthly income: ${usd.format(report.grossIncome)} (${report.visaPass ? "Pass" : "Fail"}).</li>
+        <li>Practical note: keep 6+ months of statements and tax records ready for application review.</li>
+      </ul>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>F) Readiness Score</h3>
+      <div class="readiness">
+        <p><strong>${report.readinessScore}/100</strong></p>
+        <div class="meter"><span style="width: ${report.readinessScore}%;"></span></div>
+        <p class="muted">Score combines cashflow margin, savings buffer, visa fit, and timeline risk.</p>
+      </div>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>G) Recommendations</h3>
+      <ul>${recommendations.map((item) => `<li>${item}</li>`).join("")}</ul>
+    </section>
+
+    <section class="report-section section-reveal">
+      <h3>H) Alternatives</h3>
+      <ul>
+        ${report.alternatives.map((alt) => `<li>${alt.city}: ${usd.format(alt.delta)} lower estimated monthly spend.</li>`).join("")}
+      </ul>
+    </section>
+  `;
+}
+
+function helpAnswer(question, report) {
+  const cushionIncome = report.totalCosts / (1 - report.city.taxRate) + 700;
+  const biggestRisk = report.net < 0 ? "persistent monthly deficit" : "insufficient savings buffer under downside scenarios";
+
+  const map = {
+    "Explain my verdict": `Your verdict is ${report.verdict}. It is driven by a projected ${report.net >= 0 ? "surplus" : "deficit"} of ${usd.format(report.net)} and visa fit status of ${report.visaPass ? "pass" : "fail"}.`,
+    "How can I reduce costs quickly?": `Reduce housing one tier, cap discretionary spending, and avoid premium neighborhood leases in the first 90 days. Estimated fixed-cost base is ${usd.format(report.totalCosts)}.`,
+    "What runway should I aim for?": `Target at least ${report.input.risk === "Aggressive" ? "4" : report.input.risk === "Balanced" ? "6" : "8"} months of expenses. Your current modeled runway is ${formatRunway(report.runwayMonths)}.`,
+    "What’s my biggest risk?": `Your biggest risk is ${biggestRisk}. Stress scenarios show downside net values as low as ${usd.format(Math.min(...report.scenarios.map((s) => s.net)))}.`,
+    "Do I meet visa requirements?": `${report.visaPass ? "Yes" : "No"}. Required income is ${usd.format(report.city.visaIncome)} and your input income is ${usd.format(report.grossIncome)}.`,
+    "What income target makes this comfortable?": `A more comfortable threshold is approximately ${usd.format(cushionIncome)} monthly to maintain surplus plus contingency room.`,
+    "Should I wait or move now?": `${report.verdict === "Strong" ? "Move now with disciplined execution." : report.verdict === "Borderline" ? "Wait briefly to improve buffer, then move." : "Wait and strengthen income/savings before committing."}`,
+    "Give me a 30-day plan": "Week 1: collect documentation and reset budget. Week 2: shortlist housing + legal tasks. Week 3: stress-test income and savings assumptions. Week 4: finalize go/no-go decision.",
+    "How should I sequence housing decisions?": "Start with flexible 1-3 month housing, validate actual spend, then commit to longer lease after cashflow proves stable.",
+    "What should I prioritize before departure?": "Prioritize visa paperwork, emergency fund completion, and a pre-approved budget with clear stop-loss thresholds."
+  };
+
+  return map[question];
+}
+
+function renderHelp(report) {
+  const questions = [
+    "Explain my verdict",
+    "How can I reduce costs quickly?",
+    "What runway should I aim for?",
+    "What’s my biggest risk?",
+    "Do I meet visa requirements?",
+    "What income target makes this comfortable?",
+    "Should I wait or move now?",
+    "Give me a 30-day plan",
+    "How should I sequence housing decisions?",
+    "What should I prioritize before departure?"
+  ];
+
+  helpNode.innerHTML = questions
+    .map((question) => `
+      <details>
+        <summary>${question}</summary>
+        <p>${helpAnswer(question, report)}</p>
+      </details>
+    `)
+    .join("");
+}
+
+function getFormInput() {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+function runAnalysis() {
+  if (!validateForm()) return;
+
+  const input = getFormInput();
+  const report = computeReport(input);
+  lastReport = report;
+  renderReport(report);
+  renderHelp(report);
+  reportNode.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  runAnalysis();
+});
+
+form.addEventListener("input", (event) => {
+  if (event.target.matches("input, select")) validateField(event.target);
+});
+
+resetBtn.addEventListener("click", () => {
+  form.reset();
+  citySelect.selectedIndex = 0;
+  Array.from(form.elements).forEach((field) => {
+    if (field.matches?.("input, select")) validateField(field);
+  });
+
+  reportNode.innerHTML = `
+    <h2>Your report will appear here</h2>
+    <p class="muted">Complete the form to generate your relocation decision memo.</p>
+  `;
+
+  helpNode.innerHTML = "";
+  lastReport = null;
+});
+
+bootstrapOptions();

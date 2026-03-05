@@ -15,14 +15,16 @@
     <section class="hero compact">
       <p class="eyebrow">KosherTravel</p>
       <h1>Shabbat Planner</h1>
-      <p class="hero-text">Step 1: choose city. Step 2: tap map for hotel. Step 3: use 0.8–2.5 km radius.</p>
+      <p class="hero-text">Step 1: choose city. Step 2: tap map for hotel. Step 3: choose walking radius.</p>
       <a class="btn btn-secondary" href="index.html">Back to Finder</a>
     </section>
 
     <section class="panel planner-controls">
       <div class="step"><strong>1.</strong><label for="shabbatCitySelect">Select city</label><select id="shabbatCitySelect"></select></div>
-      <div class="step"><strong>2.</strong><span id="hotelStatus" class="muted">Tap map to set your hotel location.</span></div>
+      <div class="step"><strong>2.</strong><span id="hotelStatus" class="muted">Tap the map to set your hotel location.</span><button id="currentLocationBtn" type="button" class="btn btn-secondary">Use my current location</button></div>
       <div class="step"><strong>3.</strong><label for="radiusRange">Walking radius</label><input id="radiusRange" type="range" /><span id="radiusLabel" class="radius-label"></span></div>
+      <div id="radiusPresets" class="chip-row"></div>
+      <p id="plannerMessage" class="muted">Tap the map to set your hotel location.</p>
     </section>
 
     <section class="layout">

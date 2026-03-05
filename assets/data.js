@@ -1,5 +1,7 @@
 window.KTData = (() => {
   const STORAGE_KEY = 'koshertravel_city';
+  const SHABBAT_PLAN_KEY = 'koshertravel_shabbat_plan';
+  const CITY_MAX_DISTANCE_KM = 80;
 
   const CATEGORY_META = {
     chabad: { label: 'Chabad', color: '#355caa' },
@@ -17,6 +19,30 @@ window.KTData = (() => {
     const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Failed to fetch ${path}`);
     return response.json();
+  }
+
+  function hasValidCoordinates(place) {
+    return Number.isFinite(Number(place?.lat)) && Number.isFinite(Number(place?.lng))
+      && Math.abs(Number(place.lat)) <= 90 && Math.abs(Number(place.lng)) <= 180;
+  }
+
+  function isValidWebsite(url) {
+    if (!isRealWebsite(url)) return false;
+    const text = url.trim().toLowerCase();
+    return !['example.com', 'placeholder', 'tbd', 'comingsoon', 'n/a'].some((entry) => text.includes(entry));
+  }
+
+  function validatePlaces(rawPlaces, cityMap) {
+    return rawPlaces.filter((place) => {
+      const city = cityMap.get(place.cityId);
+      if (!city || !hasValidCoordinates(place)) return false;
+      const lat = Number(place.lat);
+      const lng = Number(place.lng);
+      const distanceFromCityKm = haversineDistanceKm(city.center[0], city.center[1], lat, lng);
+      if (distanceFromCityKm > CITY_MAX_DISTANCE_KM) return false;
+      if (place.website && !isValidWebsite(place.website)) place.website = '';
+      return true;
+    });
   }
 
   function haversineDistanceKm(lat1, lon1, lat2, lon2) {
@@ -55,7 +81,13 @@ window.KTData = (() => {
     CERTIFICATION_META,
     STORAGE_KEY,
     fetchCities: () => fetchJSON('data/cities.json'),
-    fetchPlaces: () => fetchJSON('data/places.json'),
+    fetchPlaces: async () => {
+      const [cities, rawPlaces] = await Promise.all([fetchJSON('data/cities.json'), fetchJSON('data/places.json')]);
+      const cityMap = new Map(cities.map((city) => [city.id, city]));
+      return validatePlaces(rawPlaces, cityMap);
+    },
+    SHABBAT_PLAN_KEY,
+    isValidWebsite,
     haversineDistanceKm,
     formatDistance,
     isRealWebsite,
